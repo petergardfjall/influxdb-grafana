@@ -39,7 +39,7 @@ case ${1} in
 	    sleep 4s
 	done
 	echo "adding influxdb data source to grafana ..."
-	curl --user admin:${GRAFANA_PASSWORD} --fail --silent -X POST -d '{"id":1,"orgId":1,"name":"influxdb","type":"influxdb","typeLogoUrl":"","access":"proxy","url":"http://influxdb:8086","password":"","user":"","database":"${INFLUXDB_DATABASE}","basicAuth":false,"basicAuthUser":"","basicAuthPassword":"","withCredentials":false,"isDefault":true,"jsonData":{},"secureJsonFields":{}}' --header 'Content-Type: application/json' http://localhost:3000/api/datasources -o /dev/null
+	curl --user admin:${GRAFANA_PASSWORD} --fail --silent -X POST -d "{\"id\":1,\"orgId\":1,\"name\":\"influxdb\",\"type\":\"influxdb\",\"typeLogoUrl\":\"\",\"access\":\"proxy\",\"url\":\"http://influxdb:8086\",\"password\":\"\",\"user\":\"\",\"database\":\"${INFLUXDB_DATABASE}\",\"basicAuth\":false,\"basicAuthUser\":\"\",\"basicAuthPassword\":\"\",\"withCredentials\":false,\"isDefault\":true,\"jsonData\":{},\"secureJsonFields\":{}}" --header 'Content-Type: application/json' http://localhost:3000/api/datasources -o /dev/null
     ;;
 
     down)
