@@ -1,6 +1,6 @@
 # docker-grafana
 
-A script for running an InfluxDB side-by-side with Grafana in Docker containers.
+A script for running InfluxDB side-by-side with Grafana in Docker containers.
 
 Note: requires `docker` and `docker-compose` to be installed on your system.
 
@@ -8,7 +8,7 @@ The script takes care of creating a database in InfluxDB to which metrics
 can be reported, and also sets up influxdb as the default data source in
 Grafana.
 
-The script can be tuned with the following environment variables:
+The script can be modified with the following environment variables:
 
 - `INFLUXDB_API_PORT`: Host port to publish influxdb api port on. 
   Default: `8086`.
@@ -21,7 +21,7 @@ The script can be tuned with the following environment variables:
 
 
 ## Start containers
-Start InfluxDB and Grafan via:
+Start InfluxDB and Grafana via:
 
     ./stack up
 
