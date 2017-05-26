@@ -1,0 +1,57 @@
+version: "2"
+
+# set up a network local to the host to which we'll attach
+# the containers. this means that the containers will be
+# on the same network and will be able to communicate and
+# lookup each other in DNS. For example, the grafana
+# container can get the IP of the influxdb container by
+# running 'nslookup influxdb'
+networks:
+  influxdb_net:
+    driver: bridge
+
+services:
+  influxdb:
+    image: influxdb:1.2-alpine
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "1"
+    restart: always
+    ports:
+      # api
+      - ${INFLUXDB_API_PORT}:8086
+      # admin ui
+      - ${INFLUXDB_UI_PORT}:8083
+    volumes:
+      # make sure database storage persists container restarts
+      - ${PWD}/influxdb-data:/var/lib/influxdb
+    networks:
+      - influxdb_net
+    environment:
+      - INFLUXDB_REPORTING_DISABLED=true
+      # enable admin ui on 8083
+      - INFLUXDB_ADMIN_ENABLED=true
+
+  grafana:
+    image: grafana/grafana:4.3.1
+    depends_on:
+      - influxdb
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "1"
+    restart: always
+    ports:
+      - ${GRAFANA_PORT}:3000
+    volumes:
+      - ${PWD}/grafana-data:/var/lib/grafana
+    networks:
+      - influxdb_net
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
+      - GF_DASHBOARDS_JSON_ENABLED=true
+      - GF_DASHBOARDS_JSON_PATH=/var/lib/grafana/dashboards
+

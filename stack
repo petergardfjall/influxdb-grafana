@@ -1,0 +1,62 @@
+#!/bin/bash
+
+scriptname=$(basename ${0})
+scriptdir=$(realpath $(dirname ${0}))
+confdir=${scriptdir}/config
+
+# host port to publish influxdb api port on
+export INFLUXDB_API_PORT=${INFLUXDB_API_PORT:-8086}
+# host port to publish influxdb ui port on
+export INFLUXDB_UI_PORT=${INFLUXDB_UI_PORT:-8083}
+# host port to publish grafana on
+export GRAFANA_PORT=${GRAFANA_PORT:-3000}
+# grafana admin password
+export GRAFANA_PASSWORD=${GRAFANA_PASSWORD:-secret}
+
+
+
+
+function print_usage() {
+    echo "usage: ${scriptname} up|down|clean"
+    exit 1
+}
+
+case ${1} in
+    up)
+	echo "starting ..."
+	docker-compose -f ${confdir}/docker-compose.yml up -d
+
+	echo "creating infludb metricsdb database ..."
+	while ! curl -X POST --fail --silent http://localhost:${INFLUXDB_API_PORT}/query --data-urlencode "q=CREATE DATABASE metricsdb" -o /dev/null; do
+	      sleep 4s;
+	done
+	
+	# wait for grafana to come up
+	while ! curl --user admin:${GRAFANA_PASSWORD} --fail --silent http://localhost:${GRAFANA_PORT}/api/datasources -o /dev/null; do
+	    echo "waiting for grafana to come up ..."
+	    sleep 4s
+	done
+	echo "adding influxdb data source to grafana ..."
+	curl --user admin:${GRAFANA_PASSWORD} --fail --silent -X POST -d '{"id":1,"orgId":1,"name":"influxdb","type":"influxdb","typeLogoUrl":"","access":"proxy","url":"http://influxdb:8086","password":"","user":"","database":"metricsdb","basicAuth":false,"basicAuthUser":"","basicAuthPassword":"","withCredentials":false,"isDefault":true,"jsonData":{},"secureJsonFields":{}}' --header 'Content-Type: application/json' http://localhost:3000/api/datasources -o /dev/null
+    ;;
+
+    down)
+	echo "stopping containers ..."
+	docker-compose -f ${confdir}/docker-compose.yml stop
+	echo "removing containers ..."
+	docker-compose -f ${confdir}/docker-compose.yml rm -f
+	echo "removing network ..."
+	docker network rm config_influxdb_net
+	;;
+    
+    clean)
+	echo "cleaning data directories ..."
+	sudo rm -rf ${scriptdir}/influxdb-data
+	sudo rm -rf ${scriptdir}/grafana-data
+	find -name '*~' -exec rm {} \;
+	;;
+    *)
+	echo "error: unrecognized command: ${1}"
+	print_usage
+	;;
+esac
