@@ -19,7 +19,7 @@ export GRAFANA_PASSWORD=${GRAFANA_PASSWORD:-secret}
 
 
 function print_usage() {
-    echo "usage: ${scriptname} up|down|clean"
+    echo "usage: ${scriptname} up|logs|down|clean"
     exit 1
 }
 
@@ -28,11 +28,11 @@ case ${1} in
 	echo "starting ..."
 	docker-compose -f ${confdir}/docker-compose.yml up -d
 
-	echo "creating infludb ${INFLUXDB_DATABASE} database ..."
+	echo "creating influxdb ${INFLUXDB_DATABASE} database ..."
 	while ! curl -X POST --fail --silent http://localhost:${INFLUXDB_API_PORT}/query --data-urlencode "q=CREATE DATABASE ${INFLUXDB_DATABASE}" -o /dev/null; do
 	      sleep 4s;
 	done
-	
+
 	# wait for grafana to come up
 	while ! curl --user admin:${GRAFANA_PASSWORD} --fail --silent http://localhost:${GRAFANA_PORT}/api/datasources -o /dev/null; do
 	    echo "waiting for grafana to come up ..."
@@ -42,6 +42,10 @@ case ${1} in
 	curl --user admin:${GRAFANA_PASSWORD} --fail --silent -X POST -d "{\"id\":1,\"orgId\":1,\"name\":\"influxdb\",\"type\":\"influxdb\",\"typeLogoUrl\":\"\",\"access\":\"proxy\",\"url\":\"http://influxdb:8086\",\"password\":\"\",\"user\":\"\",\"database\":\"${INFLUXDB_DATABASE}\",\"basicAuth\":false,\"basicAuthUser\":\"\",\"basicAuthPassword\":\"\",\"withCredentials\":false,\"isDefault\":true,\"jsonData\":{},\"secureJsonFields\":{}}" --header 'Content-Type: application/json' http://localhost:3000/api/datasources -o /dev/null
     ;;
 
+    logs)
+	docker-compose -f ${confdir}/docker-compose.yml logs -f
+	;;
+
     down)
 	echo "stopping containers ..."
 	docker-compose -f ${confdir}/docker-compose.yml stop
@@ -50,7 +54,7 @@ case ${1} in
 	echo "removing network ..."
 	docker network rm config_influxdb_net
 	;;
-    
+
     clean)
 	echo "cleaning data directories ..."
 	sudo rm -rf ${scriptdir}/influxdb-data

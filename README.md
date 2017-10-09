@@ -28,6 +28,9 @@ Start InfluxDB and Grafana via:
 Data will be written to directories `grafana-data` and `influxdb-data` on the
 host (in the `stack` script directory) to make data survive container restarts.
 
+To view container output run:
+
+    ./stack logs
 
 ## Stop and remove containers
 
